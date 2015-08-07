@@ -60,7 +60,7 @@ class Game(object):
         ##following line is an example of cells emptyness check:
         #print self.startField.fillCells([Cell({"x":1, "y":1})]).checkCells([Cell({"x":1, "y":1})])
     def process(self):
-        return SolutionEncoder().encode([Solution(self.id, seed) for seed in self.sourceSeeds])
+        return [Solution(self.id, seed) for seed in self.sourceSeeds]
 
 class Solution(object):
     def __init__(self, gameId, seed, commands = "cthulhu", tag = ""):
@@ -69,9 +69,12 @@ class Solution(object):
         self.tag = tag
         self.solution = commands
 
-def main(inputFileName, timeLimit, memoryLimit, phrase):
+def to_json(solutionsList):
+    return SolutionEncoder().encode(solutionsList)
+
+def main(inputFileNames, timeLimit, memoryLimit, phrase):
     result = 0
-    if not inputFileName:
+    if not inputFileNames:
         print >> sys.stderr, "input file was not provided"
         result = 1
     if not timeLimit:
@@ -81,10 +84,13 @@ def main(inputFileName, timeLimit, memoryLimit, phrase):
     if result:
         return result
     try:
-        with open(inputFileName) as data_file:
-            data = json.load(data_file, encoding = "utf-8")
-        game = Game(data)
-        print game.process()
+        solutions = []
+        for inputFileName in inputFileNames:
+            with open(inputFileName) as data_file:
+                data = json.load(data_file, encoding = "utf-8")
+            game = Game(data)
+            solutions.extend(game.process())
+        print to_json(solutions)
     except Exception as e:
         print "Got error: ", e
         result = 1
@@ -96,7 +102,7 @@ if __name__ == "__main__":
     from optparse import OptionParser
     parser = OptionParser()
     #input file options:
-    parser.add_option("-f", "--file", dest = "inputFileName", help = "input FILE with games - in json", metavar = "FILE")
+    parser.add_option("-f", "--file", dest = "inputFileName", help = "input FILE with games - in json", metavar = "FILE", action="append")
     parser.add_option("-t", "--time", dest = "timeLimit", help = "time limit", metavar = "NUMBER")
     parser.add_option("-m", "--memory", dest = "memoryLimit", help = "memory limit", metavar = "NUMBER")
     parser.add_option("-p", "--phrase_of_power", dest="phrase", help = "phrase of power string", metavar = "STRING")

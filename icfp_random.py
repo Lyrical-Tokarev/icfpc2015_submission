@@ -37,3 +37,4 @@ if __name__ == '__main__':
 	actual = list(islice(rnd, 10))
 	expected = [0, 24107, 16552, 12125, 9427, 13152, 21440, 3383, 6873, 16117]
 	assert actual == expected
+	

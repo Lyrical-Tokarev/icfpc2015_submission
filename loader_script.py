@@ -6,6 +6,7 @@ class Cell(object):
     def __init__(self, data):
         self.x = data["x"]
         self.y = data["y"]
+
 """
 1st coord in field is based on height value.
 field[i, j] id True when empty, False overwise
@@ -39,6 +40,8 @@ class Unit(object):
     def __init__(self, data):
         self.pivot = Cell(data["pivot"])
         self.members = [Cell(member) for member in data["members"]]
+
+
 class Game(object):
     def __init__(self, data):
         print "in game construction"

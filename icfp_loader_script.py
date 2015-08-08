@@ -1,13 +1,15 @@
 #!/usr/bin/env python
 import json, os, sys, logging
 from json import *
+from icfp_random import Random
+from itertools import islice
 
 import numpy as np
 
-def enum(**enums):
-    return type('Enum', (), enums)
+#def enum(**enums):
+#    return type('Enum', (), enums)
 
-MoveType = enum('W'=0, 'E'=2, 'SW'=4, 'SE'=5, 'rotate_clockwise'=1, 'rotate_counter_clockwise'='x')
+#MOVE_TYPE = enum('W'=0, 'E'=2, 'SW'=4, 'SE'=5, 'RC'=1, 'RCC'='x')
 
 class Cell(object):
     def __init__(self, data):
@@ -72,14 +74,21 @@ class Game(object):
         ##following line is an example of cells emptyness check:
         #print self.startField.fillCells([Cell({"x":1, "y":1})]).checkCells([Cell({"x":1, "y":1})])
     def process(self):
-        return [Solution(self.id, seed) for seed in self.sourceSeeds]
+        return [Solution(self.id, seed, self) for seed in self.sourceSeeds]
+    def makeCommands(self, seed, default_commands):
+        self.rndGenerator = Random(seed)
+        res = self.rndGenerator.next()
+        unit = self.units[res % self.sourceLength]
+        self.placeUnit(unit)
+        return default_commands
+    def placeUnit(self, unit)
 
 class Solution(object):
-    def __init__(self, gameId, seed, commands = "cthulhu", tag = ""):
+    def __init__(self, gameId, seed, game, commands = "cthulhu", tag = ""):
         self.problemId = gameId
         self.seed = seed
         self.tag = tag
-        self.solution = commands
+        self.solution = game.makeCommands(seed, commands)
 
 def to_json(solutionsList):
     return SolutionEncoder().encode(solutionsList)

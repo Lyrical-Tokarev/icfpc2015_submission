@@ -25,13 +25,13 @@ class Triplet:
 	def __str__(self):
 		return '({},{},{})'.format(self.p, self.q, self.r)
 
-	def antiClockwise(self, pivot=None):
+	def clockwise(self, pivot=None):
 		if pivot is None:
 			return Triplet(-self.r, -self.p, -self.q)
 		else:
 			return Triplet(-self.r - pivot.q, -self.p - pivot.r, -self.q - pivot.p)
 
-	def clockwise(self, pivot=None):
+	def antiClockwise(self, pivot=None):
 		if pivot is None:
 			return Triplet(-self.q, -self.r, -self.p)
 		else:
@@ -41,19 +41,19 @@ class Triplet:
 		return Triplet(self.p, self.q + 1, self.r - 1)
 
 	def northEast(self):
-		return Triplet(self.p + 1, self.q, self.r - 1)
+		return Triplet(self.p - 1, self.q + 1, self.r)
 
 	def northWest(self):
-		return Triplet(self.p + 1, self.q - 1, self.r)
+		return Triplet(self.p - 1, self.q, self.r + 1)
 
 	def west(self):
 		return Triplet(self.p, self.q - 1, self.r + 1)
 
 	def southWest(self):
-		return Triplet(self.p - 1, self.q, self.r + 1)
+		return Triplet(self.p + 1, self.q - 1, self.r)
 
 	def southEast(self):
-		return Triplet(self.p - 1, self.q + 1, self.r)
+		return Triplet(self.p + 1, self.q, self.r - 1)
 
 	def tie(self, pin):
 		return Triplet(self.p + pin.p, self.q + pin.q, self.r + pin.r)
@@ -81,7 +81,6 @@ if __name__ == '__main__':
 	assert vec_sw == vec_w.antiClockwise()
 	assert vec_se == vec_sw.antiClockwise()
 	assert vec_e == vec_se.antiClockwise()
-
 
 	pin = Triplet(1,0,-1)
 	assert Triplet(1,2,-3).tie(pin).untie(pin) == Triplet(1,2,-3)

@@ -16,6 +16,19 @@ class Triplet:
 		self.q = q
 		self.r = r
 
+	def asTuple(self):
+		return (self.p, self.q, self.r)
+
+	def fromColRow(col, row=None):
+		if row is None:
+			(col, row) = col    # Unpack pair
+		se_moves = row
+		e_moves  = col - row // 2
+		return Triplet(se_moves, e_moves, -(se_moves + e_moves))
+
+	def toColRow(self):
+		return ((self.q - self.r) // 2, self.p)
+
 	def __eq__(self, other):
 		return self.p == other.p and self.q == other.q and self.r == other.r
 
@@ -85,5 +98,20 @@ if __name__ == '__main__':
 	pin = Triplet(1,0,-1)
 	assert Triplet(1,2,-3).tie(pin).untie(pin) == Triplet(1,2,-3)
 
-	Triplet(1,2,-3).antiClockwise(pin) == Triplet(1,2,-3).untie(pin).antiClockwise().tie(pin)
-	Triplet(1,2,-3).clockwise(pin) == Triplet(1,2,-3).untie(pin).clockwise().tie(pin)
+	assert Triplet(1,2,-3).antiClockwise(pin) == Triplet(1,2,-3).untie(pin).antiClockwise().tie(pin)
+	assert Triplet(1,2,-3).clockwise(pin) == Triplet(1,2,-3).untie(pin).clockwise().tie(pin)
+
+	assert vec_e == Triplet.fromColRow(1,0)
+	assert vec_ne == Triplet.fromColRow(0,-1)
+	assert vec_nw == Triplet.fromColRow(-1,-1)
+	assert vec_w == Triplet.fromColRow(-1,0)
+	assert vec_sw == Triplet.fromColRow(-1,1)
+	assert vec_se == Triplet.fromColRow(0,1)
+
+	assert vec_e.toColRow() == (1,0)
+	assert vec_ne.toColRow() == (0,-1)
+	assert vec_nw.toColRow() == (-1,-1)
+	assert vec_w.toColRow() == (-1,0)
+	assert vec_sw.toColRow() == (-1,1)
+	assert vec_se.toColRow() == (0,1)
+	

@@ -4,6 +4,11 @@ from json import *
 
 import numpy as np
 
+def enum(**enums):
+    return type('Enum', (), enums)
+
+MoveType = enum('W'=0, 'E'=2, 'SW'=4, 'SE'=5, 'rotate_clockwise'=1, 'rotate_counter_clockwise'='x')
+
 class Cell(object):
     def __init__(self, data):
         self.x = data["x"]
@@ -32,6 +37,13 @@ class Field(object):
     """
     def checkCells(self, cells):
         return np.all([self.field[cell.y, cell.x] for cell in cells])
+    """
+    method should return new Field object with unit moved to other position (or at initial position)
+    first param is move result (successful or not)
+    second - result of call to fillCells or current obj
+    """
+    def makeMove(self, unit, moveType):
+        return (True, self)
     def __eq__(self, other):
         return isinstance(other, Field) and isinstance(self, Field) and np.array_equal(self.field, other.field)
 

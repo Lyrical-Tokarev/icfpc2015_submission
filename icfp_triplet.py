@@ -25,11 +25,17 @@ class Triplet:
 	def __str__(self):
 		return '({},{},{})'.format(self.p, self.q, self.r)
 
-	def antiClockwise(self):
-		return Triplet(-self.r, -self.p, -self.q)
+	def antiClockwise(self, pivot=None):
+		if pivot is None:
+			return Triplet(-self.r, -self.p, -self.q)
+		else:
+			return Triplet(-self.r - pivot.q, -self.p - pivot.r, -self.q - pivot.p)
 
-	def clockwise(self):
-		return Triplet(-self.q, -self.r, -self.p)
+	def clockwise(self, pivot=None):
+		if pivot is None:
+			return Triplet(-self.q, -self.r, -self.p)
+		else:
+			return Triplet(-self.q - pivot.r, -self.r - pivot.p, -self.p - pivot.q)
 
 	def east(self):
 		return Triplet(self.p, self.q + 1, self.r - 1)
@@ -49,18 +55,25 @@ class Triplet:
 	def southEast(self):
 		return Triplet(self.p - 1, self.q + 1, self.r)
 
+	def tie(self, pin):
+		return Triplet(self.p + pin.p, self.q + pin.q, self.r + pin.r)
+
+	def untie(self, pin):
+		return Triplet(self.p - pin.p, self.q - pin.q, self.r - pin.r)
+
+
 if __name__ == '__main__':
-	origin = Triplet(0,0,0)
+	zero = Triplet(0,0,0)
 	assert Triplet(1,2,-3) == Triplet(1,2,-3)
 	assert Triplet(1,2,-3).clockwise().antiClockwise() == Triplet(1,2,-3)
 	assert Triplet(1,2,-3).clockwise().clockwise().clockwise() == Triplet(-1,-2,3)
 
-	vec_e = origin.east()
-	vec_ne = origin.northEast()
-	vec_nw = origin.northWest()
-	vec_w = origin.west()
-	vec_sw = origin.southWest()
-	vec_se = origin.southEast()
+	vec_e = zero.east()
+	vec_ne = zero.northEast()
+	vec_nw = zero.northWest()
+	vec_w = zero.west()
+	vec_sw = zero.southWest()
+	vec_se = zero.southEast()
 	assert vec_e == Triplet(0,1,-1)
 	assert vec_ne == vec_e.antiClockwise()
 	assert vec_nw == vec_ne.antiClockwise()
@@ -69,3 +82,9 @@ if __name__ == '__main__':
 	assert vec_se == vec_sw.antiClockwise()
 	assert vec_e == vec_se.antiClockwise()
 
+
+	pin = Triplet(1,0,-1)
+	assert Triplet(1,2,-3).tie(pin).untie(pin) == Triplet(1,2,-3)
+
+	Triplet(1,2,-3).antiClockwise(pin) == Triplet(1,2,-3).untie(pin).antiClockwise().tie(pin)
+	Triplet(1,2,-3).clockwise(pin) == Triplet(1,2,-3).untie(pin).clockwise().tie(pin)

@@ -22,9 +22,9 @@ def field_unit_move_test():
     moves = [Cell(1, 0), Cell(1, 1), Cell(2, 0), Cell(0, 1), Cell(0, 2)]
     expected_results = [
         [Cell(1, 0), Cell(2, 1)],#1
-        [Cell(1, 1), Cell(2, 2)],#2
+        [Cell(1, 1), Cell(3, 2)],#2
         [Cell(2, 0), Cell(3, 1)],#3
-        [Cell(0, 1), Cell(1, 2)],#4
+        [Cell(0, 1), Cell(2, 2)],#4
         [Cell(0, 2), Cell(1, 3)]
     ]
     for k in range(len(moves)):

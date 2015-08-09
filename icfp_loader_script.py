@@ -84,10 +84,10 @@ class Field(object):
         """
         returns tuple - offset to move unit's pivot at spawn
         """
-        offset_y = - min(map(lambda c: c.y, unit.members))
+        offset_y = 0 - min(map(lambda c: c.y, unit.members))
         left_x = min(map(lambda c: c.x, unit.members))
         right_x = max(map(lambda c: c.x, unit.members))
-        offset_x = (self.width - right_x + left_x - 1) // 2
+        offset_x = (self.width - right_x + left_x - 1) // 2 - left_x
         return Cell(offset_x, offset_y)
     def __eq__(self, other):
         return isinstance(other, Field) and np.array_equal(self.field, other.field)

@@ -3,6 +3,7 @@ __author__ = 'Lacemaker'
 import sys
 import os
 import fnmatch
+import math
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from PyQt4 import *
@@ -169,9 +170,28 @@ class VizFrame(QtGui.QWidget):
             self.currentUnitOffsets = o
             self.currentUnitRotation = r
         else:
+            # lock unit
             cells = self.currentUnit.moveAndRotate(self.currentUnitOffsets, self.currentUnitRotation)
             self.gameField = self.gameField.fillCells(cells)
             [self.game.filledCells.append(c) for c in cells]
+
+            # clear lines
+            lines = self.gameField.countLines()
+            if lines > 0:
+                self.gameField = self.gameField.cleanLines()
+
+            # calculate score
+            points = len(self.currentUnit.members) + 100 * (1 + lines) * lines / 2
+            if self.lastCleanedLines > 1:
+                line_bonus =  math.floor((self.lastCleanedLines - 1) * points / 10)
+            else:
+                line_bonus = 0
+            move_score = points + line_bonus
+            self.lastCleanedLines = lines
+            self.score += move_score
+            print("Score: ", move_score, self.score)
+
+            # spawn next unit
             self.nextUnit()
             cells = self.currentUnit.moveAndRotate(self.currentUnitOffsets, self.currentUnitRotation)
             return self.gameField.checkCells(cells)
@@ -181,15 +201,20 @@ class VizFrame(QtGui.QWidget):
     def loadGame(self, jsonText):
         jsonData = json.loads(jsonText, encoding = "utf-8")
         game = Game(jsonData)
+
+       # init state
         self.game = game
         self.gameField = game.startField
         self.rndGenerator = Random(game.sourceSeeds[0])
 
-        self.drawField()
         self.unitIndex = self.rndGenerator.next() % len(self.game.units)
         self.currentUnit = self.game.units[self.unitIndex]
         self.currentUnitOffsets = self.game.unitStartOffsets[self.unitIndex]
         self.currentUnitRotation = 0
+        self.lastCleanedLines = 0
+        self.score = 0
+
+        self.drawField()
         drawUnit(self.scene, self.currentUnit, self.currentUnitOffsets)
         return
 

@@ -52,3 +52,4 @@ class BadnessEstimator:
 	def deltaScoreBoundary(self, field, cell):
 		#TODO Implement me!
 		return 0
+		

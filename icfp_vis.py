@@ -71,7 +71,7 @@ class VizFrame(QtGui.QWidget):
         super(VizFrame, self).__init__()
         self.initUI()
 
-        with open("test_data/problem_10.json") as data_file:
+        with open("test_data/problem_1.json") as data_file:
             data = data_file.read()
             self.srcTextEdit.setText(data)
 
@@ -108,29 +108,34 @@ class VizFrame(QtGui.QWidget):
         if e.key() == QtCore.Qt.Key_Space:
             self.nextUnit()
         elif e.key() == QtCore.Qt.Key_S:
-            (_a, self.currentUnitOffsets, self.currentUnitRotation) = self.game.makeMove(self.game.startField, self.currentUnit, self.currentUnitOffsets, self.currentUnitRotation, MoveType.RC)
-            self.redraw()
+            self.makeMove(MoveType.RC)
         elif e.key() == QtCore.Qt.Key_W:
-            (_a, self.currentUnitOffsets, self.currentUnitRotation) = self.game.makeMove(self.game.startField, self.currentUnit, self.currentUnitOffsets, self.currentUnitRotation, MoveType.RCC)
-            self.redraw()
+            self.makeMove(MoveType.RCC)
         elif e.key() == QtCore.Qt.Key_Q:
-            (_a, self.currentUnitOffsets, self.currentUnitRotation) = self.game.makeMove(self.game.startField, self.currentUnit, self.currentUnitOffsets, self.currentUnitRotation, MoveType.W)
-            self.redraw()
+            self.makeMove(MoveType.W)
         elif e.key() == QtCore.Qt.Key_E:
-            (_a, self.currentUnitOffsets, self.currentUnitRotation) = self.game.makeMove(self.game.startField, self.currentUnit, self.currentUnitOffsets, self.currentUnitRotation, MoveType.E)
-            self.redraw()
+            self.makeMove(MoveType.E)
         elif e.key() == QtCore.Qt.Key_A:
-            (_a, self.currentUnitOffsets, self.currentUnitRotation) = self.game.makeMove(self.game.startField, self.currentUnit, self.currentUnitOffsets, self.currentUnitRotation, MoveType.SW)
-            self.redraw()
+            self.makeMove(MoveType.SW)
         elif e.key() == QtCore.Qt.Key_D:
-            (_a, self.currentUnitOffsets, self.currentUnitRotation) = self.game.makeMove(self.game.startField, self.currentUnit, self.currentUnitOffsets, self.currentUnitRotation, MoveType.SE)
-            self.redraw()
+            self.makeMove(MoveType.SE)
         return
 
-
+    def makeMove(self, moveType):
+        (_a, o, r) = self.game.makeMove(self.gameField , self.currentUnit, self.currentUnitOffsets, self.currentUnitRotation, moveType)
+        if _a:
+            self.currentUnitOffsets = o
+            self.currentUnitRotation = r
+        else:
+            cells = self.currentUnit.moveAndRotate(self.currentUnitOffsets, self.currentUnitRotation)
+            self.gameField = self.gameField.fillCells(cells)
+            [self.game.filledCells.append(c) for c in cells]
+            self.nextUnit()
+        self.redraw()
 
     def loadGame(self, game):
         self.game = game
+        self.gameField = game.startField
         self.rndGenerator = Random(game.sourceSeeds[0])
 
         self.drawField()

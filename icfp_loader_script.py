@@ -84,7 +84,7 @@ class Field(object):
         """
         returns True if all cells are empty (not filled), false otherwise
         """
-        return np.all([self.field[cell.y, cell.x] and self.checkPosition(cell.x, cell.y) for cell in cells])
+        return np.all([self.checkPosition(cell.x, cell.y) and self.field[cell.y, cell.x] for cell in cells])
 
     def computePivotStartOffset(self, unit):
         """

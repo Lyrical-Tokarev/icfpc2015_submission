@@ -6,38 +6,73 @@ from itertools import islice
 
 import numpy as np
 
-#def enum(**enums):
-#    return type('Enum', (), enums)
+class MoveType(object):
+    W = 0
+    E = 2
+    SW = 4
+    SE = 5
+    RC = 1
+    RCC = 'x'
 
-#MOVE_TYPE = enum('W'=0, 'E'=2, 'SW'=4, 'SE'=5, 'RC'=1, 'RCC'='x')
 
 class Cell(object):
-    def __init__(self, data):
-        self.x = data["x"]
-        self.y = data["y"]
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+    def __iadd__(self, b):
+        if isinstance(b, Cell):
+            self.x += b.x
+            self.y += b.y
+        else:
+            self.x += b[0]
+            self.y += b[1]
+        return self
+    def __add__(self, b):
+        """
+        example:
+        ```
+        a = Cell(3, 4)
+        print (a + Cell(5, -2)) # prints "8 2"
+        print a # prints "3 4"
+        a+= a # modifies a in place
+        print a + (1,2) # doesn't modify a
+        ```
+        """
+        new_cell = Cell(self.x, self.y)
+        if isinstance(b, Cell):
+            new_cell.x += b.x
+            new_cell.y += b.y
+        else:
+            new_cell.x += b[0]
+            new_cell.y += b[1]
+            #this is buggy, i know
+        return new_cell
+    def __str__(self):
+        return "{0} {1}".format(self.x, self.y)
+
 """
 1st coord in field is based on height value.
 field[i, j] id True when empty, False overwise
 """
 class Field(object):
-    def __init__(self, width, height):
+    def __init__(self, width, height, **args):
         self.height = height
         self.width = width
         self.field = np.ones((height, width), dtype=bool)
         logging.debug("field created")
-    """
-    method should return new Field object with cells selected
-    """
     def fillCells(self, cells):
+        """
+        returns new Field object with `cells` marked as filled, leaving self unchanged
+        """
         new_field = Field(self.width, self.height)
         np.copyto(new_field.field, self.field)
         for cell in cells:
             new_field.field[cell.y, cell.x] = False
         return new_field
-    """
-    method returns true if all cells are empty, false otherwise
-    """
     def checkCells(self, cells):
+        """
+        returns True if all cells are empty (not filled), false otherwise
+        """
         return np.all([self.field[cell.y, cell.x] for cell in cells])
     """
     method should return new Field object with unit moved to other position (or at initial position)
@@ -46,15 +81,24 @@ class Field(object):
     """
     def makeMove(self, unit, moveType):
         return (True, self)
+    def computePivotStartOffset(self, unit):
+        """
+        returns tuple - offset to move unit's pivot at spawn
+        """
+        offset_y = - min(map(lambda c: c.y, unit.members))
+        left_x = min(map(lambda c: c.x, unit.members))
+        right_x = max(map(lambda c: c.x, unit.members))
+        offset_x = (self.width - right_x + left_x - 1) // 2
+        return (offset_x, offset_y)
     def __eq__(self, other):
-        return isinstance(other, Field) and isinstance(self, Field) and np.array_equal(self.field, other.field)
+        return isinstance(other, Field) and np.array_equal(self.field, other.field)
 
 
 
 class Unit(object):
-    def __init__(self, data):
-        self.pivot = Cell(data["pivot"]) #TODO: process situation with no pivot
-        self.members = [Cell(member) for member in data["members"]]
+    def __init__(self, pivot, members):
+        self.pivot = Cell(**pivot) #TODO: process situation with no pivot
+        self.members = [Cell(**member) for member in members]
 class SolutionEncoder(JSONEncoder):
     def default(self, o):
         if isinstance(o, Solution):
@@ -64,24 +108,28 @@ class Game(object):
     def __init__(self, data):
         logging.debug("in game construction")
         logging.debug(data)
-        self.startField = Field(data["width"], data["height"], )
-        self.filledCells = [Cell(cell_info)for cell_info in data["filled"]]
+        self.startField = Field(**data)
+        self.filledCells = [Cell(**cell_info) for cell_info in data["filled"]]
         self.sourceLength = data["sourceLength"]
         self.sourceSeeds = data["sourceSeeds"]
         self.id = data["id"]
-        self.units = [Unit(unit_info) for unit_info in data["units"]]
         self.startField = self.startField.fillCells(self.filledCells)
+        self.units = [Unit(**unit_info) for unit_info in data["units"]]
+        self.unitStartOffsets = [self.startField.computePivotStartOffset(unit) for unit in self.units]
         ##following line is an example of cells emptyness check:
         #print self.startField.fillCells([Cell({"x":1, "y":1})]).checkCells([Cell({"x":1, "y":1})])
     def process(self):
         return [Solution(self.id, seed, self) for seed in self.sourceSeeds]
     def makeCommands(self, seed, default_commands):
+        """
+        main method - returns sequence of commands
+        """
         self.rndGenerator = Random(seed)
-        res = self.rndGenerator.next()
-        unit = self.units[res % self.sourceLength]
-        self.placeUnit(unit)
+        unitIndex = self.rndGenerator.next() % self.sourceLength
+        currentUnit = self.units[unitIndex]
+        currentOffset = self.unitStartOffsets[unitIndex]
+        currentRotation = 0
         return default_commands
-    def placeUnit(self, unit)
 
 class Solution(object):
     def __init__(self, gameId, seed, game, commands = "cthulhu", tag = ""):

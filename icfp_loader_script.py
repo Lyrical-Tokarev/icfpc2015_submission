@@ -129,6 +129,7 @@ class Game(object):
         self.unitStartOffsets = [self.startField.computePivotStartOffset(unit) for unit in self.units]
         ##following line is an example of cells emptyness check:
         #print self.startField.fillCells([Cell({"x":1, "y":1})]).checkCells([Cell({"x":1, "y":1})])
+
     def process(self):
         return [Solution(self.id, seed, self) for seed in self.sourceSeeds]
 
@@ -160,7 +161,7 @@ class Game(object):
         main method - should return sequence of commands
         """
         self.rndGenerator = Random(seed)
-        unitIndex = self.rndGenerator.next() % self.sourceLength
+        unitIndex = self.rndGenerator.next() % len(self.units)
         currentUnit = self.units[unitIndex]
         currentOffset = self.unitStartOffsets[unitIndex]
         currentRotation = 0

@@ -166,6 +166,7 @@ class VizFrame(QtGui.QWidget):
 
     def makeMove(self, moveType):
         (_a, o, r) = self.game.makeMove(self.gameField , self.currentUnit, self.currentUnitOffsets, self.currentUnitRotation, moveType)
+        result = True
         if _a:
             self.currentUnitOffsets = o
             self.currentUnitRotation = r
@@ -194,9 +195,10 @@ class VizFrame(QtGui.QWidget):
             # spawn next unit
             self.nextUnit()
             cells = self.currentUnit.moveAndRotate(self.currentUnitOffsets, self.currentUnitRotation)
-            return self.gameField.checkCells(cells)
+            result = self.gameField.checkCells(cells)
+
         self.redraw()
-        return True
+        return result
 
     def loadGame(self, jsonText):
         jsonData = json.loads(jsonText, encoding = "utf-8")
@@ -239,9 +241,10 @@ class VizFrame(QtGui.QWidget):
         w = self.game.startField.width
         h = self.game.startField.height
         self.scene.clear()
-        drawGrid(self.scene, w, h)
-        for cell in self.game.filledCells:
-            drawHex(self.scene, cell.x, cell.y, True)
+        for x in xrange(0, w):
+            for y in xrange(0, h):
+                drawHex(self.scene, x, y, not self.gameField.field[y, x])
+
         return
 
     def redraw(self):

@@ -16,6 +16,24 @@ class MoveType(object):
     RCC = 'x'
     IGN = '*'
 
+    @staticmethod
+    def fromChar(c):
+        dict = {
+            MoveType.W : ['p', '\'', '!', '.', '0', '3'],
+            MoveType.E : ['b', 'c', 'e', 'f', 'y', '2'],
+            MoveType.SW: ['a', 'g', 'h', 'i', 'j', '4'],
+            MoveType.SE: ['l', 'm', 'n', 'o', ' ', '5'],
+            MoveType.RC: ['d', 'q', 'r', 'v', 'z', '1'],
+            MoveType.RCC:['k', 's', 't', 'u', 'w', 'x']
+        }
+
+        for (k, v) in dict.items():
+            if c in v:
+                return k
+            print c
+        raise ValueError(c)
+        return
+
 
 class Cell(object):
     def __init__(self, x, y):

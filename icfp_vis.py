@@ -72,7 +72,7 @@ class VizFrame(QtGui.QWidget):
         super(VizFrame, self).__init__()
         self.initUI()
 
-        self.currentFile = "test_data/problem_1.json"
+        self.currentFile = "test_data/problem_6.json"
         self.loadFileData(self.currentFile)
 
 
@@ -87,13 +87,19 @@ class VizFrame(QtGui.QWidget):
         grview.setScene(self.scene)
         grview.resize(640, 480)
 
-        self.srcTextEdit = QTextEdit(self);
-        self.srcTextEdit.setGeometry(640, 0 , 160, 100)
+        sidebar = QWidget(self)
+        sidebarLayout = QVBoxLayout()
+        sidebar.move(640, 0)
+        sidebar.setFixedWidth(160)
+
+        self.srcTextEdit = QTextEdit(self)
+        self.srcTextEdit.setFixedHeight(100)
+        self.solTextEdit = QTextEdit(self)
+        self.solTextEdit.setFixedHeight(100)
 
         panel = QWidget(self)
         panel.setGeometry(QRect(640, 100, 160, 40))
         panelButtons = QHBoxLayout(self)
-
 
         btnLoad = QPushButton ("Load")
         def onLoadClick():
@@ -123,6 +129,19 @@ class VizFrame(QtGui.QWidget):
         panelButtons.addWidget(btnLoad)
         panelButtons.addWidget(btnNext)
         panel.setLayout(panelButtons)
+
+        btnPlay = QPushButton("Play")
+        def onPlayClick():
+            solStr = str(self.solTextEdit.toPlainText())
+            self.play(solStr)
+            return
+        btnPlay.clicked.connect(onPlayClick)
+
+        sidebarLayout.addWidget(self.srcTextEdit)
+        sidebarLayout.addWidget(panel)
+        sidebarLayout.addWidget(self.solTextEdit)
+        sidebarLayout.addWidget(btnPlay)
+        sidebar.setLayout(sidebarLayout)
 
         self.show()
         return
@@ -195,11 +214,20 @@ class VizFrame(QtGui.QWidget):
         drawGrid(self.scene, w, h)
         for cell in self.game.filledCells:
             drawHex(self.scene, cell.x, cell.y, True)
+        return
 
     def redraw(self):
         self.drawField()
         drawUnit(self.scene, self.currentUnit, self.currentUnitOffsets, self.currentUnitRotation)
+        return
 
+    def play(self, solStr):
+        for c in solStr:
+            if (c not in ['\r', '\n', '\t']):
+                move = MoveType.fromChar(c)
+                self.makeMove(move)
+                QtGui.QApplication.processEvents() 
+        return
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

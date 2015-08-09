@@ -37,3 +37,10 @@ def field_unit_move_test():
             for i in range(len(actual_result)):
                 print "actual: {0}, expected: {1}".format(actual_result[i], expected_result[i])
                 assert_true(actual_result[i] == expected_result[i])
+
+def kill_filled_lines_test():
+    field = Field(4, 7).fillCells([Cell(x, 2) for x in range(4)]).fillCells([Cell(x, 5) for x in range(4)])
+    assert_true(field.cleanLines() == Field(4,7))
+    field = Field(4, 7).fillCells([Cell(x, 2) for x in range(4)]).fillCells([Cell(x, 5) for x in range(4)]).fillCells([
+        Cell(3, 6), Cell(0, 1)])
+    assert_true(field.cleanLines() == Field(4, 7).fillCells([Cell(3, 6), Cell(0, 3)]))

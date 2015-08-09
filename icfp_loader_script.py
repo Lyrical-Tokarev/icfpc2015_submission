@@ -79,6 +79,15 @@ class Field(object):
         for cell in cells:
             new_field.field[cell.y, cell.x] = False
         return new_field
+    def cleanLines(self):
+        if np.all(np.any(self.field, 1)):
+            return self
+        rows = np.where(np.any(self.field, 1) == False)[0]
+        shifts = [np.count_nonzero(rows > i) for i in range(7)]
+        new_field = Field(self.width, self.height)
+        for i in range(self.height - 1, -1, -1):
+            new_field.field[i + shifts[i], :] = self.field[i, :]
+        return new_field
     def checkPosition(self, x, y):
         return x >= 0 and x < self.width and y >= 0 and y < self.height
     def checkCells(self, cells):

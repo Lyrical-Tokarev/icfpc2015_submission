@@ -88,6 +88,8 @@ class Field(object):
         for i in range(self.height - 1, -1, -1):
             new_field.field[i + shifts[i], :] = self.field[i, :]
         return new_field
+    def countLines():
+        return self.height - np.count_nonzero(np.any(self.field, 1))
     def checkPosition(self, x, y):
         return x >= 0 and x < self.width and y >= 0 and y < self.height
     def checkCells(self, cells):

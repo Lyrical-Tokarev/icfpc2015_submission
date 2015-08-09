@@ -60,10 +60,10 @@ def drawPivot(scene, col, row, color = COLOR_PIVOT):
     scene.addEllipse(QRectF(x - pivotSize / 2, y - pivotSize / 2 , pivotSize, pivotSize), QPen(), QBrush(color, Qt.SolidPattern))
     return
 
-def drawUnit(scene, unit):
-    for m in unit.members:
+def drawUnit(scene, unit, offsets = Cell(0, 0), rotation = 0):
+    for m in unit.moveAndRotate(offsets, rotation):
         drawHex(scene, m.x, m.y, True, COLOR_UNIT)
-    drawPivot(scene, unit.pivot.x, unit.pivot.y)
+    drawPivot(scene, unit.pivot.x + offsets.x, unit.pivot.y + offsets.y)
     return
 
 class VizFrame(QtGui.QWidget):
@@ -107,7 +107,27 @@ class VizFrame(QtGui.QWidget):
     def keyPressEvent(self, e):
         if e.key() == QtCore.Qt.Key_Space:
             self.nextUnit()
+        elif e.key() == QtCore.Qt.Key_S:
+            (_a, self.currentUnitOffsets, self.currentUnitRotation) = self.game.makeMove(self.game.startField, self.currentUnit, self.currentUnitOffsets, self.currentUnitRotation, MoveType.RC)
+            self.redraw()
+        elif e.key() == QtCore.Qt.Key_W:
+            (_a, self.currentUnitOffsets, self.currentUnitRotation) = self.game.makeMove(self.game.startField, self.currentUnit, self.currentUnitOffsets, self.currentUnitRotation, MoveType.RCC)
+            self.redraw()
+        elif e.key() == QtCore.Qt.Key_Q:
+            (_a, self.currentUnitOffsets, self.currentUnitRotation) = self.game.makeMove(self.game.startField, self.currentUnit, self.currentUnitOffsets, self.currentUnitRotation, MoveType.W)
+            self.redraw()
+        elif e.key() == QtCore.Qt.Key_E:
+            (_a, self.currentUnitOffsets, self.currentUnitRotation) = self.game.makeMove(self.game.startField, self.currentUnit, self.currentUnitOffsets, self.currentUnitRotation, MoveType.E)
+            self.redraw()
+        elif e.key() == QtCore.Qt.Key_A:
+            (_a, self.currentUnitOffsets, self.currentUnitRotation) = self.game.makeMove(self.game.startField, self.currentUnit, self.currentUnitOffsets, self.currentUnitRotation, MoveType.SW)
+            self.redraw()
+        elif e.key() == QtCore.Qt.Key_D:
+            (_a, self.currentUnitOffsets, self.currentUnitRotation) = self.game.makeMove(self.game.startField, self.currentUnit, self.currentUnitOffsets, self.currentUnitRotation, MoveType.SE)
+            self.redraw()
         return
+
+
 
     def loadGame(self, game):
         self.game = game
@@ -115,15 +135,20 @@ class VizFrame(QtGui.QWidget):
 
         self.drawField()
         self.unitIndex = self.rndGenerator.next() % len(self.game.units)
-
-        drawUnit(self.scene, self.game.units[self.unitIndex])
+        self.currentUnit = self.game.units[self.unitIndex]
+        self.currentUnitOffsets = self.game.unitStartOffsets[self.unitIndex]
+        self.currentUnitRotation = 0
+        drawUnit(self.scene, self.currentUnit, self.currentUnitOffsets)
         return
 
     def nextUnit(self):
         self.unitIndex = self.rndGenerator.next() % len(self.game.units)
+        self.currentUnit = self.game.units[self.unitIndex]
+        self.currentUnitOffsets = self.game.unitStartOffsets[self.unitIndex]
+        self.currentUnitRotation = 0
         print ("unitIndex", (self.unitIndex, self.game.sourceLength))
         self.drawField()
-        drawUnit(self.scene, self.game.units[self.unitIndex])
+        drawUnit(self.scene, self.currentUnit, self.currentUnitOffsets)
         return
 
     def drawField(self):
@@ -133,6 +158,10 @@ class VizFrame(QtGui.QWidget):
         drawGrid(self.scene, w, h)
         for cell in self.game.filledCells:
             drawHex(self.scene, cell.x, cell.y, True)
+
+    def redraw(self):
+        self.drawField()
+        drawUnit(self.scene, self.currentUnit, self.currentUnitOffsets, self.currentUnitRotation)
 
 
 if __name__ == "__main__":

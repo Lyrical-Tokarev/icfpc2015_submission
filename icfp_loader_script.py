@@ -53,6 +53,12 @@ class Cell(object):
     def toTriplet(self):
         return Triplet.fromColRow(self.x, self.y)
 
+    @staticmethod
+    def fromTriplet(triplet):
+        (x, y) = triplet.toColRow()
+        return Cell(x, y)
+
+
 """
 1st coord in field is based on height value.
 field[i, j] id True when empty, False overwise
@@ -140,13 +146,13 @@ class Game(object):
         newOffset = currentOffset
         newRotation = currentRotation
         if moveType == MoveType.W:
-            newOffset = currentOffset + Triplet().west().toColRow()
+            newOffset = Cell.fromTriplet(currentOffset.toTriplet().west())
         if moveType == MoveType.E:
-            newOffset = currentOffset + Triplet().east().toColRow()
+            newOffset = Cell.fromTriplet(currentOffset.toTriplet().east())
         if moveType == MoveType.SE:
-            newOffset = currentOffset + Triplet().southEast().toColRow()
+            newOffset = Cell.fromTriplet(currentOffset.toTriplet().southEast())
         if moveType == MoveType.SW:
-            newOffset = currentOffset + Triplet().southWest().toColRow()
+            newOffset = Cell.fromTriplet(currentOffset.toTriplet().southWest())
         if moveType == MoveType.RC:
             newRotation = (currentRotation + 1) % 6
         if moveType == MoveType.RCC:

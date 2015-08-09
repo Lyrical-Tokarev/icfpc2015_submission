@@ -226,7 +226,7 @@ class VizFrame(QtGui.QWidget):
             if (c not in ['\r', '\n', '\t']):
                 move = MoveType.fromChar(c)
                 self.makeMove(move)
-                QtGui.QApplication.processEvents() 
+                QtGui.QApplication.processEvents()
         return
 
 if __name__ == "__main__":

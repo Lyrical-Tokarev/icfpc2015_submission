@@ -244,7 +244,7 @@ class Game(object):
                     currentRotation = 0
                     previousWasBad = True
         return "".join([
-            default_commands[0] for i in range(len(valid_commands) // len(default_commands))]) + default_commands[0][:(len(valid_commands) % len(default_commands))]
+            default_commands[0] for i in range(len(valid_commands) // len(default_commands[0]))]) + default_commands[0][:(len(valid_commands) % len(default_commands[0]))]
         #currentUnit.moveAndRotate(currentOffset, currentRotation)
         #print (currentOffset.__str__(), currentRotation)
         #(moveResult, newOffset, newRotation) = self.makeMove(currentField, currentUnit, currentOffset, currentRotation, MoveType.W)
@@ -253,7 +253,7 @@ class Game(object):
 
 
 class Solution(object):
-    def __init__(self, gameId, seed, game, commands = ["BigbootePlanet 10Ei!"], tag = "test2"):
+    def __init__(self, gameId, seed, game, commands = ["BigbootePlanet 10Ei!"], tag = "tes2"):
         self.problemId = gameId
         self.seed = seed
         self.tag = tag

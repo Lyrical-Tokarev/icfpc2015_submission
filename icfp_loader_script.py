@@ -8,12 +8,13 @@ from icfp_triplet import Triplet
 import numpy as np
 
 class MoveType(object):
-    W = 0
-    E = 2
-    SW = 4
-    SE = 5
-    RC = 1
+    W = '0'
+    E = '2'
+    SW = '4'
+    SE = '5'
+    RC = '1'
     RCC = 'x'
+    IGN = '*'
 
 
 class Cell(object):
@@ -83,12 +84,13 @@ class Field(object):
         if np.all(np.any(self.field, 1)):
             return self
         rows = np.where(np.any(self.field, 1) == False)[0]
-        shifts = [np.count_nonzero(rows > i) for i in range(7)]
+        shifts = [np.count_nonzero(rows > i) for i in range(self.height)]
         new_field = Field(self.width, self.height)
         for i in range(self.height - 1, -1, -1):
-            new_field.field[i + shifts[i], :] = self.field[i, :]
+            if i + shifts[i] < self.height:
+                new_field.field[i + shifts[i], :] = self.field[i, :]
         return new_field
-    def countLines():
+    def countLines(self):
         return self.height - np.count_nonzero(np.any(self.field, 1))
     def checkPosition(self, x, y):
         return x >= 0 and x < self.width and y >= 0 and y < self.height
@@ -145,6 +147,21 @@ class Game(object):
         self.startField = self.startField.fillCells(self.filledCells)
         self.units = [Unit(**unit_info) for unit_info in data["units"]]
         self.unitStartOffsets = [self.startField.computePivotStartOffset(unit) for unit in self.units]
+        self.commandsDict = {}
+        for command in "p'!.03P":
+            self.commandsDict[command] = MoveType.W
+        for command in "bcefy2BCEFY":
+            self.commandsDict[command] = MoveType.E
+        for command in "aghij4AGHIJ":
+            self.commandsDict[command] = MoveType.SW
+        for command in "lmno 5LMNO":
+            self.commandsDict[command] = MoveType.SE
+        for command in "dqrvz1DQRVZ":
+            self.commandsDict[command] = MoveType.RC
+        for command in "kstuwxKSTUWX":
+            self.commandsDict[command] = MoveType.RCC
+
+
         ##following line is an example of cells emptyness check:
         #print self.startField.fillCells([Cell({"x":1, "y":1})]).checkCells([Cell({"x":1, "y":1})])
 
@@ -173,7 +190,8 @@ class Game(object):
         cells = unit.moveAndRotate(newOffset, newRotation)
         moveResult = currentField.checkCells(cells)
         return (moveResult, newOffset, newRotation)
-
+    def strToCommands(self, str):
+        return filter(lambda x: x!= MoveType.IGN, [self.commandsDict.get(ch, MoveType.IGN) for ch in str])
     def makeCommands(self, seed, default_commands):
         """
         main method - should return sequence of commands
@@ -184,15 +202,40 @@ class Game(object):
         currentOffset = self.unitStartOffsets[unitIndex]
         currentRotation = 0
         currentField = self.startField
-        currentUnit.moveAndRotate(currentOffset, currentRotation)
-        print (currentOffset.__str__(), currentRotation)
-        (moveResult, newOffset, newRotation) = self.makeMove(currentField, currentUnit, currentOffset, currentRotation, MoveType.W)
-        print (moveResult, newOffset.__str__(), newRotation)
-        return default_commands
+        cmds = self.strToCommands(default_commands[0])
+        valid_commands = []
+        previousWasBad = False
+        while(True):
+            if previousWasBad:
+                break
+            for cmd in cmds:
+                (moveResult, newOffset, newRotation) = self.makeMove(currentField, currentUnit, currentOffset, currentRotation, cmd)
+                if moveResult:
+                    previousWasBad = False
+                    currentOffset = newOffset
+                    currentRotation = newRotation
+                    valid_commands.append(cmd)
+                else:
+                    #todo: spawn new Unit here
+                    if previousWasBad:
+                        break
+                    currentField = currentField.fillCells(currentUnit.moveAndRotate(currentOffset, currentRotation)).cleanLines()
+                    unitIndex = self.rndGenerator.next() % len(self.units)
+                    currentUnit = self.units[unitIndex]
+                    currentOffset = self.unitStartOffsets[unitIndex]
+                    currentRotation = 0
+                    previousWasBad = True
+        return "".join([
+            default_commands[0] for i in range(len(valid_commands) // len(default_commands))]) + default_commands[0][:(len(valid_commands) % len(default_commands))]
+        #currentUnit.moveAndRotate(currentOffset, currentRotation)
+        #print (currentOffset.__str__(), currentRotation)
+        #(moveResult, newOffset, newRotation) = self.makeMove(currentField, currentUnit, currentOffset, currentRotation, MoveType.W)
+        #print (moveResult, newOffset.__str__(), newRotation)
+        #return default_commands[0]
 
 
 class Solution(object):
-    def __init__(self, gameId, seed, game, commands = "cthulhu", tag = ""):
+    def __init__(self, gameId, seed, game, commands = ["BigbootePlanet 10Ei!"], tag = "test2"):
         self.problemId = gameId
         self.seed = seed
         self.tag = tag
@@ -204,8 +247,9 @@ def to_json(solutionsList):
 def main(inputFileNames, timeLimit, memoryLimit, phrase):
     result = 0
     if not inputFileNames:
-        print >> sys.stderr, "input file was not provided"
-        result = 1
+        inputFileNames = ["test_data/problem_{0}.json".format(i) for i in range(24)]
+        #print >> sys.stderr, "input file was not provided"
+        #result = 1
     if not timeLimit:
         timeLimit = 0
     if not memoryLimit:

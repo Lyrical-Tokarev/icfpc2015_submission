@@ -44,3 +44,5 @@ def kill_filled_lines_test():
     field = Field(4, 7).fillCells([Cell(x, 2) for x in range(4)]).fillCells([Cell(x, 5) for x in range(4)]).fillCells([
         Cell(3, 6), Cell(0, 1)])
     assert_true(field.cleanLines() == Field(4, 7).fillCells([Cell(3, 6), Cell(0, 3)]))
+    #print Field(10, 10).fillCells([Cell(x, 9) for x in range(10)]).cleanLines().field
+    assert_true(Field(10, 10).fillCells([Cell(x, 9) for x in range(10)]).cleanLines() == Field(10, 10))

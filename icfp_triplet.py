@@ -10,7 +10,7 @@ class Triplet:
 	Objects of this `Triplet` class are immutable.
 	"""
 
-	def __init__(self, p, q, r):
+	def __init__(self, p = 0, q = 0, r = 0):
 		assert p + q + r == 0
 		self.p = p
 		self.q = q
@@ -19,6 +19,7 @@ class Triplet:
 	def asTuple(self):
 		return (self.p, self.q, self.r)
 
+	@staticmethod
 	def fromColRow(col, row=None):
 		if row is None:
 			(col, row) = col    # Unpack pair
@@ -114,4 +115,3 @@ if __name__ == '__main__':
 	assert vec_w.toColRow() == (-1,0)
 	assert vec_sw.toColRow() == (-1,1)
 	assert vec_se.toColRow() == (0,1)
-	

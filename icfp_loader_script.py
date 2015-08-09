@@ -3,6 +3,7 @@ import json, os, sys, logging
 from json import *
 from icfp_random import Random
 from itertools import islice
+from icfp_triplet import Triplet
 
 import numpy as np
 
@@ -48,7 +49,9 @@ class Cell(object):
             #this is buggy, i know
         return new_cell
     def __str__(self):
-        return "{0} {1}".format(self.x, self.y)
+        return "Cell({0}, {1})".format(self.x, self.y)
+    def toTriplet(self):
+        return Triplet.fromColRow(self.x, self.y)
 
 """
 1st coord in field is based on height value.
@@ -69,18 +72,14 @@ class Field(object):
         for cell in cells:
             new_field.field[cell.y, cell.x] = False
         return new_field
+    def checkPosition(self, x, y):
+        return x >= 0 and x < self.width and y >= 0 and y < self.height
     def checkCells(self, cells):
         """
         returns True if all cells are empty (not filled), false otherwise
         """
-        return np.all([self.field[cell.y, cell.x] for cell in cells])
-    """
-    method should return new Field object with unit moved to other position (or at initial position)
-    first param is move result (successful or not)
-    second - result of call to fillCells or current obj
-    """
-    def makeMove(self, unit, moveType):
-        return (True, self)
+        return np.all([self.field[cell.y, cell.x] and self.checkPosition(cell.x, cell.y) for cell in cells])
+
     def computePivotStartOffset(self, unit):
         """
         returns tuple - offset to move unit's pivot at spawn
@@ -89,21 +88,33 @@ class Field(object):
         left_x = min(map(lambda c: c.x, unit.members))
         right_x = max(map(lambda c: c.x, unit.members))
         offset_x = (self.width - right_x + left_x - 1) // 2
-        return (offset_x, offset_y)
+        return Cell(offset_x, offset_y)
     def __eq__(self, other):
         return isinstance(other, Field) and np.array_equal(self.field, other.field)
 
 
-
 class Unit(object):
     def __init__(self, pivot, members):
-        self.pivot = Cell(**pivot) #TODO: process situation with no pivot
+        self.pivot = Cell(**pivot)
         self.members = [Cell(**member) for member in members]
+    def moveAndRotate(self, offset, rotation):
+        """
+        returns [Cells] which are currently filled by Unit object
+        """
+        _rotate = lambda triplet, n: reduce(lambda last, n: last.clockwise(), range(n), triplet)
+        pin = self.pivot.toTriplet()
+        return map(
+            lambda cell: Cell(*(_rotate(cell.toTriplet().untie(pin), rotation % 6).tie(pin).toColRow())) + offset,
+            self.members
+        )
+
+
 class SolutionEncoder(JSONEncoder):
     def default(self, o):
         if isinstance(o, Solution):
             return o.__dict__
         return JSONEncoder().default(o)
+
 class Game(object):
     def __init__(self, data):
         logging.debug("in game construction")
@@ -120,16 +131,46 @@ class Game(object):
         #print self.startField.fillCells([Cell({"x":1, "y":1})]).checkCells([Cell({"x":1, "y":1})])
     def process(self):
         return [Solution(self.id, seed, self) for seed in self.sourceSeeds]
+
+    def makeMove(self, currentField, unit, currentOffset, currentRotation, moveType):
+        """
+        performs move for current unit and checks it position in currentField
+        """
+        newOffset = currentOffset
+        newRotation = currentRotation
+        if moveType == MoveType.W:
+            newOffset = currentOffset + Triplet().west().toColRow()
+        if moveType == MoveType.E:
+            newOffset = currentOffset + Triplet().east().toColRow()
+        if moveType == MoveType.SE:
+            newOffset = currentOffset + Triplet().southEast().toColRow()
+        if moveType == MoveType.SW:
+            newOffset = currentOffset + Triplet().southWest().toColRow()
+        if moveType == MoveType.RC:
+            newRotation = (currentRotation + 1) % 6
+        if moveType == MoveType.RCC:
+            newRotation = (currentRotation - 1) % 6
+        #next - check if unit can be placed at new position
+        cells = unit.moveAndRotate(newOffset, newRotation)
+        moveResult = currentField.checkCells(cells)
+        return (moveResult, newOffset, newRotation)
+
     def makeCommands(self, seed, default_commands):
         """
-        main method - returns sequence of commands
+        main method - should return sequence of commands
         """
         self.rndGenerator = Random(seed)
         unitIndex = self.rndGenerator.next() % self.sourceLength
         currentUnit = self.units[unitIndex]
         currentOffset = self.unitStartOffsets[unitIndex]
         currentRotation = 0
+        currentField = self.startField
+        currentUnit.moveAndRotate(currentOffset, currentRotation)
+        print (currentOffset.__str__(), currentRotation)
+        (moveResult, newOffset, newRotation) = self.makeMove(currentField, currentUnit, currentOffset, currentRotation, MoveType.W)
+        print (moveResult, newOffset.__str__(), newRotation)
         return default_commands
+
 
 class Solution(object):
     def __init__(self, gameId, seed, game, commands = "cthulhu", tag = ""):

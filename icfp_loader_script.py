@@ -110,7 +110,7 @@ class Unit(object):
         _rotate = lambda triplet, n: reduce(lambda last, n: last.clockwise(), range(n), triplet)
         pin = self.pivot.toTriplet()
         return map(
-            lambda cell: Cell(*(_rotate(cell.toTriplet().untie(pin), rotation % 6).tie(pin).toColRow())) + offset,
+            lambda cell: Cell(*(_rotate(cell.toTriplet().untie(pin), rotation % 6).tie(offset.toTriplet()).tie(pin).toColRow())),
             self.members
         )
 

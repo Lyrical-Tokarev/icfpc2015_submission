@@ -2,6 +2,7 @@
 __author__ = 'Lacemaker'
 import sys
 import os
+import fnmatch
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from PyQt4 import *
@@ -71,9 +72,8 @@ class VizFrame(QtGui.QWidget):
         super(VizFrame, self).__init__()
         self.initUI()
 
-        with open("test_data/problem_1.json") as data_file:
-            data = data_file.read()
-            self.srcTextEdit.setText(data)
+        self.currentFile = "test_data/problem_1.json"
+        self.loadFileData(self.currentFile)
 
 
     def initUI(self):
@@ -90,16 +90,39 @@ class VizFrame(QtGui.QWidget):
         self.srcTextEdit = QTextEdit(self);
         self.srcTextEdit.setGeometry(640, 0 , 160, 100)
 
+        panel = QWidget(self)
+        panel.setGeometry(QRect(640, 100, 160, 40))
+        panelButtons = QHBoxLayout(self)
 
-        btnLoad = QPushButton ("Load", self)
-        btnLoad.setGeometry(640, 100, 160, 20)
+
+        btnLoad = QPushButton ("Load")
         def onLoadClick():
-            jsonStr = self.srcTextEdit.toPlainText()
-            jsonData = json.loads(str(jsonStr), encoding = "utf-8")
-            game = Game(jsonData)
-            self.loadGame(game)
+            jsonStr = str(self.srcTextEdit.toPlainText())
+            self.loadGame(jsonStr)
             return
         btnLoad.clicked.connect(onLoadClick)
+
+        btnPrev = QPushButton ("<<")
+        def onPrevClick():
+            dir = os.path.dirname(self.currentFile)
+            file = os.path.basename(self.currentFile)
+            files = filter(lambda f: fnmatch.fnmatch(f, '*.json'), os.listdir(dir))
+            jsonFile = files[files.index(file) - 1]
+            self.loadFileData(os.path.join(dir, jsonFile))
+        btnPrev.clicked.connect(onPrevClick)
+        btnNext = QPushButton (">>")
+        def onNextClick():
+            dir = os.path.dirname(self.currentFile)
+            file = os.path.basename(self.currentFile)
+            files = filter(lambda f: fnmatch.fnmatch(f, '*.json'), os.listdir(dir))
+            jsonFile = files[files.index(file) + 1]
+            self.loadFileData(os.path.join(dir, jsonFile))
+        btnNext.clicked.connect(onNextClick)
+
+        panelButtons.addWidget(btnPrev)
+        panelButtons.addWidget(btnLoad)
+        panelButtons.addWidget(btnNext)
+        panel.setLayout(panelButtons)
 
         self.show()
         return
@@ -133,7 +156,9 @@ class VizFrame(QtGui.QWidget):
             self.nextUnit()
         self.redraw()
 
-    def loadGame(self, game):
+    def loadGame(self, jsonText):
+        jsonData = json.loads(jsonText, encoding = "utf-8")
+        game = Game(jsonData)
         self.game = game
         self.gameField = game.startField
         self.rndGenerator = Random(game.sourceSeeds[0])
@@ -146,12 +171,19 @@ class VizFrame(QtGui.QWidget):
         drawUnit(self.scene, self.currentUnit, self.currentUnitOffsets)
         return
 
+    def loadFileData(self, file):
+        self.currentFile = file
+        with open(self.currentFile) as data_file:
+            data = data_file.read()
+            self.srcTextEdit.setText(data)
+            self.loadGame(data)
+
+
     def nextUnit(self):
         self.unitIndex = self.rndGenerator.next() % len(self.game.units)
         self.currentUnit = self.game.units[self.unitIndex]
         self.currentUnitOffsets = self.game.unitStartOffsets[self.unitIndex]
         self.currentUnitRotation = 0
-        print ("unitIndex", (self.unitIndex, self.game.sourceLength))
         self.drawField()
         drawUnit(self.scene, self.currentUnit, self.currentUnitOffsets)
         return

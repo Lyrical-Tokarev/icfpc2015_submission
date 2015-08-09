@@ -39,11 +39,11 @@ class BadnessEstimator:
 
 	def scoreBoundary(self, field):
 		#TODO Not accurate
-		hb = np.zeros((width, height), dtype=bool)
+		hb = np.zeros((self.width, self.height), dtype=bool)
 		np.logical_not(field.field[0, :], out=hb[0, :])
 		np.diff(field.field, axis=0, out=hb[1:, :])
 
-		vb = np.zeros((width, height), dtype=bool)
+		vb = np.zeros((self.width, self.height), dtype=bool)
 		np.logical_not(field.field[:, 0], out=vb[:, 0])
 		np.diff(field.field, axis=1, out=vb[:, 1:])
 

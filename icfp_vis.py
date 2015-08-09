@@ -173,7 +173,10 @@ class VizFrame(QtGui.QWidget):
             self.gameField = self.gameField.fillCells(cells)
             [self.game.filledCells.append(c) for c in cells]
             self.nextUnit()
+            cells = self.currentUnit.moveAndRotate(self.currentUnitOffsets, self.currentUnitRotation)
+            return self.gameField.checkCells(cells)
         self.redraw()
+        return True
 
     def loadGame(self, jsonText):
         jsonData = json.loads(jsonText, encoding = "utf-8")
@@ -225,8 +228,10 @@ class VizFrame(QtGui.QWidget):
         for c in solStr:
             if (c not in ['\r', '\n', '\t']):
                 move = MoveType.fromChar(c)
-                self.makeMove(move)
-                QtGui.QApplication.processEvents()
+                res = self.makeMove(move)
+                if not res:
+                    break
+            QtGui.QApplication.processEvents()
         return
 
 if __name__ == "__main__":

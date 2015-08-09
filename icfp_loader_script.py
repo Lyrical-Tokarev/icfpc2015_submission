@@ -52,7 +52,8 @@ class Cell(object):
         return "Cell({0}, {1})".format(self.x, self.y)
     def toTriplet(self):
         return Triplet.fromColRow(self.x, self.y)
-
+    def __eq__(self, cell):
+        return cell.x == self.x and cell.y == self.y
     @staticmethod
     def fromTriplet(triplet):
         (x, y) = triplet.toColRow()

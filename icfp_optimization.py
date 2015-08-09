@@ -1,7 +1,7 @@
 #! /usr/bin/python
 
 from math import exp
-from random import random
+from random import random, gauss
 
 
 def gibbs(e_cur, e_cand, temp):
@@ -16,7 +16,7 @@ def gibbs(e_cur, e_cand, temp):
 	return exp((e_cur - e_cand) / temp)
 
 class SimulatedAnnealing:
-	def __init__(energy, candidate, schedule, apf=gibbs):
+	def __init__(self, energy, candidate, schedule, apf=gibbs):
 		"""
 		`energy` -- Energy (target) function. It takes a configuration and returns
 		a real value that measures its fitness. Note that lesser quantities means
@@ -49,12 +49,20 @@ class SimulatedAnnealing:
 		self.schedule  = schedule
 		self.apf       = apf
 
-	def optimize(c_cur, e_cur=None):
+	def optimize(self, c_cur, e_cur=None):
 		if e_cur is None:
-			e_cur = energy(c_cand)
+			e_cur = energy(c_cur)
 		for temp in self.schedule:
 			c_cand = self.candidate(c_cur)
 			e_cand = self.energy(c_cand)
-			if random() < apf(e_cur, e_cand, temp):
+			if random() < self.apf(e_cur, e_cand, temp):
 				(c_cur, e_cur) = (c_cand, e_cand)
 		return (c_cur, e_cur)
+
+if __name__ == "__main__": 
+	energy    = lambda x: abs(x) ** 1.8
+	candidate = lambda x: x + gauss(0, 0.1)
+	schedule  = (1 / (n + 1) ** 2 for n in range(100))
+	sa = SimulatedAnnealing(energy, candidate, schedule)
+	print(sa.optimize(2.0))
+

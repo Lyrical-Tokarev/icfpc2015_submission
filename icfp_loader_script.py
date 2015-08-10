@@ -166,8 +166,8 @@ class Game(object):
         ##following line is an example of cells emptyness check:
         #print self.startField.fillCells([Cell({"x":1, "y":1})]).checkCells([Cell({"x":1, "y":1})])
 
-    def process(self):
-        return [Solution(self.id, seed, self) for seed in self.sourceSeeds]
+    def process(self, phrasesOfPower):
+        return [Solution(self.id, seed, self, phrasesOfPower) for seed in self.sourceSeeds]
 
     def makeMove(self, currentField, unit, currentOffset, currentRotation, moveType):
         """
@@ -276,7 +276,7 @@ class Game(object):
 
 
 class Solution(object):
-    def __init__(self, gameId, seed, game, commands = ["iiiiiiiimmiiiiiimimmiiiimimimmimimimimmimimimeemimeeeemimim" +
+    def __init__(self, gameId, seed, game, phrasesOfPower, commands = ["iiiiiiiimmiiiiiimimmiiiimimimmimimimimmimimimeemimeeeemimim" +
     "imimiiiiiimmeemimimimimiimimimmeemimimimmeeeemimimimmiiiiii" +
     "pmiimimimeeemmimimmemimimimiiiiiimeeemimimimimeeemimimimmii" +
     "iimemimimmiiiipimeeemimimmiiiippmeeeeemimimimiiiimmimimeemi" +
@@ -300,13 +300,16 @@ class Solution(object):
         self.problemId = gameId
         self.seed = seed
         self.tag = tag
-        self.solution = Solver(game).solve(seed).replace("".join(game.strToCommands("Ei!")), "Ei!")
+        self.solution = Solver(game).solve(seed)#.replace("".join(game.strToCommands("Ei!")), "Ei!")
+        for phrase in phrasesOfPower:
+            phrase_encoded = "".join(game.strToCommands(phrase))
+            self.solution = self.solution.replace(phrase_encoded, phrase)
         #game.makeCommands(seed, commands)#.replace("".join(game.strToCommands("Ei!")), "Ei!")
 
 def to_json(solutionsList):
     return SolutionEncoder().encode(solutionsList)
 
-def main(inputFileNames, timeLimit, memoryLimit, phrase):
+def main(inputFileNames, timeLimit, memoryLimit, phrases):
     result = 0
     if not inputFileNames:
         inputFileNames = ["test_data/problem_{0}.json".format(i) for i in range(24) if i!=6 ]
@@ -324,7 +327,7 @@ def main(inputFileNames, timeLimit, memoryLimit, phrase):
             with open(inputFileName) as data_file:
                 data = json.load(data_file, encoding = "utf-8")
             game = Game(data)
-            solutions.extend(game.process())
+            solutions.extend(game.process(phrases))
         print to_json(solutions)
     except Exception as e:
         print "Got error: ", e
@@ -340,8 +343,13 @@ if __name__ == "__main__":
     parser.add_option("-f", "--file", dest = "inputFileName", help = "input FILE with games - in json", metavar = "FILE", action="append")
     parser.add_option("-t", "--time", dest = "timeLimit", help = "time limit", metavar = "NUMBER")
     parser.add_option("-m", "--memory", dest = "memoryLimit", help = "memory limit", metavar = "NUMBER")
-    parser.add_option("-p", "--phrase_of_power", dest="phrase", help = "phrase of power string", metavar = "STRING")
+    parser.add_option("-p", "--phrase_of_power", dest="phrases", help = "phrase of power string", metavar = "STRING", action="append")
     (options, args) = parser.parse_args()
-    result = main(options.inputFileName, options.timeLimit, options.memoryLimit, options.phrase)
+    if options.phrases:
+        phrasesOfPower = sorted(options.phrases, key=len, reverse = True)
+        print phrasesOfPower
+        result = main(options.inputFileName, options.timeLimit, options.memoryLimit, phrasesOfPower)
+    else:
+        result = main(options.inputFileName, options.timeLimit, options.memoryLimit, [])
     if result:
         parser.print_help()

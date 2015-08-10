@@ -1,6 +1,5 @@
 #! /usr/bin/python
 
-from icfp_loader_script import Field
 import numpy as np
 from numpy import log, logical_not, logical_xor
 
@@ -12,14 +11,14 @@ class BadnessEstimator:
 		self.width  = width
 		self.height = height
 		xs = np.arange(height)
-		self.height_scale = heightBadness(xs)
+		self.height_scale = heightBadness(height, xs)
 
 	def scoreHeight(self, field):
 		row_fullness = self.width - np.sum(field.field, axis=0)
 		return np.sum(row_fullness * self.height_scale)
 
 	def deltaScoreHeight(self, field, cell):
-		badness = heightBadness(cell.x)
+		badness = heightBadness(self.height, cell.x)
 		if field.field[cell.y, cell.x]:
 			return badness
 		else:
@@ -38,18 +37,25 @@ class BadnessEstimator:
 			return -badness
 
 	def scoreBoundary(self, field):
-		#TODO Not accurate
-		hb = np.zeros((self.width, self.height), dtype=bool)
-		np.logical_not(field.field[0, :], out=hb[0, :])
-		np.diff(field.field, axis=0, out=hb[1:, :])
-
-		vb = np.zeros((self.width, self.height), dtype=bool)
-		np.logical_not(field.field[:, 0], out=vb[:, 0])
-		np.diff(field.field, axis=1, out=vb[:, 1:])
-
-		return np.sum(hb) + np.sum(vb) + np.sum(logical_xor(hb, vb))
+		tiles = logical_not(field.field)
+		n1 = self.height // 2
+		n2 = (self.height - 1) // 2
+		joints  = np.sum(tiles[:, :-1] & tiles[:, 1:])
+		joints += np.sum(tiles[:-1, :] & tiles[1:, :])
+		joints += np.sum(tiles[1:, 0:2*n1:2] & tiles[:-1, 1:2*n1+1:2])
+		joints += np.sum(tiles[:-1, 1:2*n2+1:2] & tiles[1:, 2:2*n2+2:2])
+		return 6 * np.sum(tiles) - 2 * joints
 
 	def deltaScoreBoundary(self, field, cell):
 		#TODO Implement me!
 		return 0
+
 		
+if __name__ == "__main__":
+	class Field:
+		def __init__(self, w, h):
+			self.field = (np.random.rand(w, h) < 0.5)
+
+	f = Field(7, 7)
+	(w, h) = f.field.shape
+	print (BadnessEstimator(w, h).scoreBoundary(f))

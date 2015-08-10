@@ -53,7 +53,7 @@ class BadnessEstimator:
 		bounds  = c == 0 or f[c, r] != f[c-1, r]
 		bounds += c == cm or f[c, r] != f[c+1, r]
 		bounds += r == 0 and f[c, r] != f[c, r-1]
-		bounds += r == rm od f[c, r] != f[c, r+1]
+		bounds += r == rm or f[c, r] != f[c, r+1]
 		if r & 1:
 			bounds += c == cm or r == 0 or f[c, r] != f[c+1, r-1]
 			bounds += c == cm or r == rm or f[c, r] != f[c+1, r+1]
@@ -62,7 +62,7 @@ class BadnessEstimator:
 			bounds += c == 0 or r == rm or f[c, r] != f[c-1, r+1]
 		return 6 - 2 * bounds
 
-		
+
 if __name__ == "__main__":
 	class Field:
 		def __init__(self, w, h):

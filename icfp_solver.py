@@ -1,3 +1,4 @@
+#! /usr/bin/env python
 __author__ = 'Lacemaker'
 
 from icfp_random import *
@@ -63,7 +64,7 @@ class Solver():
                     bestCost = cost
                     bestOffset = offset
             cells = self.currentUnit.moveAndRotate(bestOffset + Cell(0, -1), 0)
-            for cell in cells: print cell
+            #for cell in cells: print cell
             self.gameField = self.gameField.fillCells(cells)
             r.extend(getRoute(self.currentUnitOffsets, bestOffset))
 

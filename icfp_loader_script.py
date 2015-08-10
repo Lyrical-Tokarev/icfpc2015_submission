@@ -4,6 +4,7 @@ from json import *
 from icfp_random import Random
 from itertools import islice
 from icfp_triplet import Triplet
+from icfp_solver import *
 
 import numpy as np
 
@@ -223,7 +224,7 @@ class Game(object):
                 cmd_index = (cmd_index + 1) % len(cmds)
                 (moveResult, newOffset, newRotation, cmd2) = self.substituteMove(currentField, currentUnit, currentOffset, currentRotation, cmd)
                 if moveResult:
-                    if cmd2 == MoveType.SW and last_cmd != MoveType.W:
+                    if False:#cmd2 == MoveType.SW and last_cmd != MoveType.W:
                         #print "eification"
                         offset = currentOffset
                         rotation = currentRotation
@@ -295,11 +296,12 @@ class Solution(object):
     "eemimimeeeemimimiiiipmeemimimiimiimimmimeeemimimmippipmmiim" +
     "emimmipimeeeemimmeemimiippimeeeeemimimmmimmmeeeemimimiiipim" +
     "miipmemimmeeeemimimiipipimmipppimeeemimmpppmmpmeeeeemimmemmBigbootePlanet 10Ei!cthulhu",
-    "BigbootePlanet 10Ei!cthulhu"], tag = "aiaiaip"):
+    "BigbootePlanet 10Ei!cthulhu"], tag = "s1"):
         self.problemId = gameId
         self.seed = seed
         self.tag = tag
-        self.solution = game.makeCommands(seed, commands)#.replace("".join(game.strToCommands("Ei!")), "Ei!")
+        self.solution = Solver(game).solve(seed).replace("".join(game.strToCommands("Ei!")), "Ei!")
+        #game.makeCommands(seed, commands)#.replace("".join(game.strToCommands("Ei!")), "Ei!")
 
 def to_json(solutionsList):
     return SolutionEncoder().encode(solutionsList)

@@ -1,7 +1,6 @@
-#! /usr/bin/python
+#!/usr/bin/env python
 
 from itertools import *
-
 
 class Random:
 	"""
@@ -23,18 +22,17 @@ class Random:
 		return self.next()	# for compatibility with Python 3
 
 	def next(self):
-		prn = (self.state & 0x7FFF0000) >> 16 
+		prn = (self.state & 0x7FFF0000) >> 16
 		self.state = (1103515245 * self.state + 12345) & 0xFFFFFFFF
 		return prn
 
 
 """
 A little bit of home-made unit testing.  For a sake of the Old Ones of course!
-""" 
+"""
 if __name__ == '__main__':
 	rnd = Random(17)
 
 	actual = list(islice(rnd, 10))
 	expected = [0, 24107, 16552, 12125, 9427, 13152, 21440, 3383, 6873, 16117]
 	assert actual == expected
-	

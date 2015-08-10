@@ -1,15 +1,15 @@
-
+#!/usr/bin/env python
 __author__ = 'Lacemaker'
-import sys
-import os
-import fnmatch
-import math
+import sys, os, fnmatch, math
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from PyQt4 import *
+from icfp_random import Random
+
 from icfp_loader_script import *
+
 import json
-from icfp_solver import *
+import icfp_solver
 
 
 HEX_SIZE = 18
@@ -74,7 +74,7 @@ class VizFrame(QtGui.QWidget):
         super(VizFrame, self).__init__()
         self.initUI()
 
-        self.currentFile = "test_data/problem_6.json"
+        self.currentFile = "test_data/problem_23.json"
         self.loadFileData(self.currentFile)
 
 
@@ -141,8 +141,8 @@ class VizFrame(QtGui.QWidget):
 
         btnSolve = QPushButton("Solve")
         def onSolveClick():
-            solver = Solver(self.game)
-            solStr = solver.solve(0)
+            solver = icfp_solver.Solver(self.game)
+            solStr = solver.solve(self.game.sourceSeeds[0])
             self.solTextEdit.setText(solStr)
             return
         btnSolve.clicked.connect(onSolveClick)
@@ -217,7 +217,7 @@ class VizFrame(QtGui.QWidget):
        # init state
         self.game = game
         self.gameField = game.startField
-        self.rndGenerator = Random(0)#game.sourceSeeds[1])
+        self.rndGenerator = Random(game.sourceSeeds[0])
 
         self.unitIndex = self.rndGenerator.next() % len(self.game.units)
         self.currentUnit = self.game.units[self.unitIndex]
@@ -276,9 +276,8 @@ class VizFrame(QtGui.QWidget):
         return
 
 if __name__ == "__main__":
+    from icfp_loader_script import *
     app = QApplication(sys.argv)
     w = VizFrame()
-    w.show();
+    w.show()
     sys.exit(app.exec_())
-
-

@@ -4,9 +4,10 @@ from json import *
 from icfp_random import Random
 from itertools import islice
 from icfp_triplet import Triplet
-from icfp_solver import *
+import icfp_solver
 
 import numpy as np
+
 
 class MoveType(object):
     W = '0'
@@ -16,6 +17,33 @@ class MoveType(object):
     RC = '1'
     RCC = 'x'
     IGN = '*'
+    @staticmethod
+    def fromChar(c):
+        dict = {
+            MoveType.W : ['p', '\'', '!', '.', '0', '3', 'P'],
+            MoveType.E : ['b', 'c', 'e', 'f', 'y', '2', 'B', 'C', 'E', 'F', 'Y'],
+            MoveType.SW: ['a', 'g', 'h', 'i', 'j', '4', 'A', 'G', 'H', 'I', 'J'],
+            MoveType.SE: ['l', 'm', 'n', 'o', ' ', '5', 'L', 'M', 'N', 'O'],
+            MoveType.RC: ['d', 'q', 'r', 'v', 'z', '1', 'D', 'Q', 'R', 'V', 'Z'],
+            MoveType.RCC:['k', 's', 't', 'u', 'w', 'x', 'K', 'S', 'T', 'U', 'W', 'X']
+        }
+        for (k, v) in dict.items():
+            if c in v:
+                return k
+        print c
+        raise ValueError(c)
+        return
+    @staticmethod
+    def toChars(move):
+        return {
+            MoveType.W :"p\'!.03",
+            MoveType.E : "bcefy2",
+            MoveType.SW: "aghij4",
+            MoveType.SE: "lmno 5",
+            MoveType.RC: "dqrvz1",
+            MoveType.RCC: "kstuwx",
+            MoveType.IGN: ""
+        }[move]
 
 
 class Cell(object):
@@ -100,7 +128,6 @@ class Field(object):
         returns True if all cells are empty (not filled), false otherwise
         """
         return np.all([self.checkPosition(cell.x, cell.y) and self.field[cell.y, cell.x] for cell in cells])
-
     def computePivotStartOffset(self, unit):
         """
         returns tuple - offset to move unit's pivot at spawn
@@ -148,36 +175,13 @@ class Game(object):
         self.startField = self.startField.fillCells(self.filledCells)
         self.units = [Unit(**unit_info) for unit_info in data["units"]]
         self.unitStartOffsets = [self.startField.computePivotStartOffset(unit) for unit in self.units]
-        self.commandsDict = {}
-        for command in "p'!.03P":
-            self.commandsDict[command] = MoveType.W
-        for command in "bcefy2BCEFY":
-            self.commandsDict[command] = MoveType.E
-        for command in "aghij4AGHIJ":
-            self.commandsDict[command] = MoveType.SW
-        for command in "lmno 5LMNO":
-            self.commandsDict[command] = MoveType.SE
-        for command in "dqrvz1DQRVZ":
-            self.commandsDict[command] = MoveType.RC
-        for command in "kstuwxKSTUWX":
-            self.commandsDict[command] = MoveType.RCC
-        self.lettersDict = {
-            MoveType.W :"p'!.03",
-            MoveType.E : "bcefy2",
-            MoveType.SW: "aghij4",
-            MoveType.SE: "lmno 5",
-            MoveType.RC: "dqrvz1",
-            MoveType.RCC: "kstuwx"
-        }
     def convert(self, str, seed):
-        rnd = Random(seed+1)
-        return "".join([self.lettersDict[s][rnd.next() % len(self.lettersDict[s])] for s in str])
+        rnd = Random(seed + 1)
+        return "".join([MoveType.toChars[s][rnd.next() % len(MoveType.toChars[s])] for s in str])
         ##following line is an example of cells emptyness check:
         #print self.startField.fillCells([Cell({"x":1, "y":1})]).checkCells([Cell({"x":1, "y":1})])
-
     def process(self, phrasesOfPower):
         return [Solution(self.id, seed, self, phrasesOfPower) for seed in self.sourceSeeds]
-
     def makeMove(self, currentField, unit, currentOffset, currentRotation, moveType):
         """
         performs move for current unit and checks it position in currentField
@@ -201,15 +205,13 @@ class Game(object):
         moveResult = currentField.checkCells(cells)
         return (moveResult, newOffset, newRotation)
     def strToCommands(self, str):
-        return filter(lambda x: x!= MoveType.IGN, [self.commandsDict.get(ch, MoveType.IGN) for ch in str])
+        return filter(lambda x: x!= MoveType.IGN, [MoveType.fromChar(ch) for ch in str])
     def substituteMove(self, currentField, currentUnit, currentOffset, currentRotation, cmd):
         for cmd2 in [cmd, MoveType.SE, MoveType.SW, MoveType.RC, MoveType.RCC, MoveType.E, MoveType.W]:
             (moveResult, newOffset, newRotation) = self.makeMove(currentField, currentUnit, currentOffset, currentRotation, cmd)
             if moveResult:
                 return (moveResult, newOffset, newRotation, cmd2)
         return (False, currentOffset, currentRotation, cmd)
-
-
     def makeCommands(self, seed, default_commands):
         """
         main method - should return sequence of commands
@@ -233,7 +235,7 @@ class Game(object):
                 cmd_index = (cmd_index + 1) % len(cmds)
                 (moveResult, newOffset, newRotation, cmd2) = self.substituteMove(currentField, currentUnit, currentOffset, currentRotation, cmd)
                 if moveResult:
-                    if False:#cmd2 == MoveType.SW and last_cmd != MoveType.W:
+                    if cmd2 == MoveType.SW and last_cmd != MoveType.W:
                         #print "eification"
                         offset = currentOffset
                         rotation = currentRotation
@@ -305,17 +307,20 @@ class Solution(object):
     "eemimimeeeemimimiiiipmeemimimiimiimimmimeeemimimmippipmmiim" +
     "emimmipimeeeemimmeemimiippimeeeeemimimmmimmmeeeemimimiiipim" +
     "miipmemimmeeeemimimiipipimmipppimeeemimmpppmmpmeeeeemimmemmBigbootePlanet 10Ei!cthulhu",
-    "BigbootePlanet 10Ei!cthulhu"], tag = "t1"):
+    "BigbootePlanet 10Ei!cthulhu"], tag = "t2"):
         self.problemId = gameId
         self.seed = seed
-        self.tag = tag + str(seed)
-        self.solution = Solver(game).solve(seed)#.replace("".join(game.strToCommands("Ei!")), "Ei!")
+        self.tag = tag #+ str(seed)
+        self.solution = icfp_solver.Solver(game).solve(seed)#.replace("".join(game.strToCommands("Ei!")), "Ei!")
         #self.solution = game.convert(self.solution, seed)
         #return
+        if gameId == 6:
+            self.solution = commands[0]
+        self.solution = game.makeCommands(seed, [self.solution])
         for phrase in phrasesOfPower:
-            phrase_encoded = "".join(game.strToCommands(phrase))
+            phrase_encoded = ''.join(game.strToCommands(phrase))
             self.solution = self.solution.replace(phrase_encoded, phrase)
-        #game.makeCommands(seed, commands)#.replace("".join(game.strToCommands("Ei!")), "Ei!")
+        #.replace("".join(game.strToCommands("Ei!")), "Ei!")
 
 def to_json(solutionsList):
     return SolutionEncoder().encode(solutionsList)
@@ -323,7 +328,7 @@ def to_json(solutionsList):
 def main(inputFileNames, timeLimit, memoryLimit, phrases):
     result = 0
     if not inputFileNames:
-        inputFileNames = ["test_data/problem_{0}.json".format(i) for i in range(24) if i!=6 ]
+        inputFileNames = ["test_data/problem_{0}.json".format(i) for i in range(25)  ]
         #print >> sys.stderr, "input file was not provided"
         #result = 1
     if not timeLimit:
@@ -332,17 +337,17 @@ def main(inputFileNames, timeLimit, memoryLimit, phrases):
         memoryLimit = 0
     if result:
         return result
-    try:
-        solutions = []
-        for inputFileName in inputFileNames:
-            with open(inputFileName) as data_file:
-                data = json.load(data_file, encoding = "utf-8")
-            game = Game(data)
-            solutions.extend(game.process(phrases))
-        print to_json(solutions)
-    except Exception as e:
-        print "Got error: ", e
-        result = 1
+    #try:
+    solutions = []
+    for inputFileName in inputFileNames:
+        with open(inputFileName) as data_file:
+            data = json.load(data_file, encoding = "utf-8")
+        game = Game(data)
+        solutions.extend(game.process(phrases))
+    print to_json(solutions)
+    #except Exception as e:
+    #    print "Got error: ", e
+    #    result = 1
     return result
 
 if __name__ == "__main__":

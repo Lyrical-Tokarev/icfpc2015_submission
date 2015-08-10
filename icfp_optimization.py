@@ -62,7 +62,7 @@ class SimulatedAnnealing:
 if __name__ == "__main__": 
 	energy    = lambda x: abs(x) ** 1.8
 	candidate = lambda x: x + gauss(0, 0.1)
-	schedule  = (1 / (n + 1) ** 2 for n in range(100))
+	schedule  = (1.0 / (n + 1) ** 2 for n in xrange(100))
 	sa = SimulatedAnnealing(energy, candidate, schedule)
 	print(sa.optimize(2.0))
 

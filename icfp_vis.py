@@ -9,6 +9,7 @@ from PyQt4.QtGui import *
 from PyQt4 import *
 from icfp_loader_script import *
 import json
+from icfp_solver import *
 
 
 HEX_SIZE = 18
@@ -138,10 +139,19 @@ class VizFrame(QtGui.QWidget):
             return
         btnPlay.clicked.connect(onPlayClick)
 
+        btnSolve = QPushButton("Solve")
+        def onSolveClick():
+            solver = Solver(self.game)
+            solStr = solver.solve(0)
+            self.solTextEdit.setText(solStr)
+            return
+        btnSolve.clicked.connect(onSolveClick)
+
         sidebarLayout.addWidget(self.srcTextEdit)
         sidebarLayout.addWidget(panel)
         sidebarLayout.addWidget(self.solTextEdit)
         sidebarLayout.addWidget(btnPlay)
+        sidebarLayout.addWidget(btnSolve)
         sidebar.setLayout(sidebarLayout)
 
         self.show()
@@ -207,7 +217,7 @@ class VizFrame(QtGui.QWidget):
        # init state
         self.game = game
         self.gameField = game.startField
-        self.rndGenerator = Random(game.sourceSeeds[0])
+        self.rndGenerator = Random(0)#game.sourceSeeds[1])
 
         self.unitIndex = self.rndGenerator.next() % len(self.game.units)
         self.currentUnit = self.game.units[self.unitIndex]
@@ -253,13 +263,16 @@ class VizFrame(QtGui.QWidget):
         return
 
     def play(self, solStr):
-        for c in solStr:
+        moveCount = 0
+        for c in solStr.lower():
+            moveCount += 1
             if (c not in ['\r', '\n', '\t']):
                 move = MoveType.fromChar(c)
                 res = self.makeMove(move)
                 if not res:
                     break
             QtGui.QApplication.processEvents()
+        print "moves {0} / {1}".format(moveCount, len(solStr))
         return
 
 if __name__ == "__main__":

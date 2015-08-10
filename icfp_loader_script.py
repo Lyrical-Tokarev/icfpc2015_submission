@@ -16,24 +16,6 @@ class MoveType(object):
     RCC = 'x'
     IGN = '*'
 
-    @staticmethod
-    def fromChar(c):
-        dict = {
-            MoveType.W : ['p', '\'', '!', '.', '0', '3'],
-            MoveType.E : ['b', 'c', 'e', 'f', 'y', '2'],
-            MoveType.SW: ['a', 'g', 'h', 'i', 'j', '4'],
-            MoveType.SE: ['l', 'm', 'n', 'o', ' ', '5'],
-            MoveType.RC: ['d', 'q', 'r', 'v', 'z', '1'],
-            MoveType.RCC:['k', 's', 't', 'u', 'w', 'x']
-        }
-
-        for (k, v) in dict.items():
-            if c in v:
-                return k
-            print c
-        raise ValueError(c)
-        return
-
 
 class Cell(object):
     def __init__(self, x, y):
@@ -210,6 +192,14 @@ class Game(object):
         return (moveResult, newOffset, newRotation)
     def strToCommands(self, str):
         return filter(lambda x: x!= MoveType.IGN, [self.commandsDict.get(ch, MoveType.IGN) for ch in str])
+    def substituteMove(self, currentField, currentUnit, currentOffset, currentRotation, cmd):
+        for cmd2 in [cmd, MoveType.SE, MoveType.SW, MoveType.RC, MoveType.RCC, MoveType.E, MoveType.W]:
+            (moveResult, newOffset, newRotation) = self.makeMove(currentField, currentUnit, currentOffset, currentRotation, cmd)
+            if moveResult:
+                return (moveResult, newOffset, newRotation, cmd2)
+        return (False, currentOffset, currentRotation, cmd)
+
+
     def makeCommands(self, seed, default_commands):
         """
         main method - should return sequence of commands
@@ -223,28 +213,60 @@ class Game(object):
         cmds = self.strToCommands(default_commands[0])
         valid_commands = []
         previousWasBad = False
+        last_cmd = MoveType.IGN
+        unitsCounter = 0
         while(True):
             if previousWasBad:
                 break
+            cmd_index = -1
             for cmd in cmds:
-                (moveResult, newOffset, newRotation) = self.makeMove(currentField, currentUnit, currentOffset, currentRotation, cmd)
+                cmd_index = (cmd_index + 1) % len(cmds)
+                (moveResult, newOffset, newRotation, cmd2) = self.substituteMove(currentField, currentUnit, currentOffset, currentRotation, cmd)
                 if moveResult:
+                    if cmd2 == MoveType.SW and last_cmd != MoveType.W:
+                        #print "eification"
+                        offset = currentOffset
+                        rotation = currentRotation
+                        eiResult = True
+                        for ei in self.strToCommands("Ei!"):
+                            (mr, offset, rotation) = self.makeMove(currentField, currentUnit, offset, rotation, ei)
+                            if not mr:
+                                eiResult = False
+                                break
+                        if eiResult:
+                            valid_commands.append("Ei!")
+                            #print "eificated"
+                        else:
+                            if cmd2 == cmd:
+                                valid_commands.append(default_commands[0][cmd_index])
+                            else:
+                                valid_commands.append(cmd2)
+                    else:
+                        if cmd2 == cmd:
+                            valid_commands.append(default_commands[0][cmd_index])
+                        else:
+                            valid_commands.append(cmd2)
                     previousWasBad = False
                     currentOffset = newOffset
                     currentRotation = newRotation
-                    valid_commands.append(cmd)
+                    last_cmd = cmd2
                 else:
                     #todo: spawn new Unit here
                     if previousWasBad:
+                        break
+                    valid_commands.append(default_commands[0][cmd_index])
+                    previousWasBad = True
+                    if unitsCounter >= self.sourceLength:
                         break
                     currentField = currentField.fillCells(currentUnit.moveAndRotate(currentOffset, currentRotation)).cleanLines()
                     unitIndex = self.rndGenerator.next() % len(self.units)
                     currentUnit = self.units[unitIndex]
                     currentOffset = self.unitStartOffsets[unitIndex]
                     currentRotation = 0
-                    previousWasBad = True
-        return "".join([
-            default_commands[0] for i in range(len(valid_commands) // len(default_commands[0]))]) + default_commands[0][:(len(valid_commands) % len(default_commands[0]))]
+                    unitsCounter += 1
+        #return "".join([
+        #    default_commands[0] for i in range(len(valid_commands) // len(default_commands[0]))]) + default_commands[0][:(len(valid_commands) % len(default_commands[0]))]
+        return "".join(valid_commands)
         #currentUnit.moveAndRotate(currentOffset, currentRotation)
         #print (currentOffset.__str__(), currentRotation)
         #(moveResult, newOffset, newRotation) = self.makeMove(currentField, currentUnit, currentOffset, currentRotation, MoveType.W)
@@ -253,11 +275,31 @@ class Game(object):
 
 
 class Solution(object):
-    def __init__(self, gameId, seed, game, commands = ["BigbootePlanet 10Ei!"], tag = "tes2"):
+    def __init__(self, gameId, seed, game, commands = ["iiiiiiiimmiiiiiimimmiiiimimimmimimimimmimimimeemimeeeemimim" +
+    "imimiiiiiimmeemimimimimiimimimmeemimimimmeeeemimimimmiiiiii" +
+    "pmiimimimeeemmimimmemimimimiiiiiimeeemimimimimeeemimimimmii" +
+    "iimemimimmiiiipimeeemimimmiiiippmeeeeemimimimiiiimmimimeemi" +
+    "mimeeeemimimiiiipmeeemmimmiimimmmimimeemimimimmeeemimiiiiip" +
+    "miiiimmeeemimimiiiipmmiipmmimmiippimemimeeeemimmiipppmeeeee" +
+    "mimimmiimipmeeeemimimiimmeeeeemimmeemimmeeeemimiiippmiippmi" +
+    "iimmiimimmmmmeeeemimmiippimmimimeemimimimmeemimimimmeemimim" +
+    "imiimimimeeemmimimmmiiiiipimeemimimimmiiiimimmiiiiiiiimiimi" +
+    "mimimeeemmimimimmiiiiiimimmemimimimimmimimimeemimiiiiiiiimi" +
+    "iiimimimiimimimmimmimimimimmeeeemimimimimmmimimimimeemimimi" +
+    "mimmmemimimmiiiiiiimiimimimmiiiiiimeeeeemimimimimmimimimmmm" +
+    "emimimmeeeemimimimmiimimimmiiiiiipmeeeeemimimimimmiiiiimmem" +
+    "imimimimmmmimimmeeeemimimimimeeemimimimmiimimimeeemmimimmii" +
+    "iiiiimimiiiiiimimmiiiiiiiimmimimimimiiiimimimeemimimimimmee" +
+    "emimimimimiiiiiiimiiiimimmemimimimmeemimimimeeemmimimmiiiii" +
+    "immiiiipmmiiimmmimimeemimimeeemmimmiiiippmiiiimiiippimiimim" +
+    "eemimimeeeemimimiiiipmeemimimiimiimimmimeeemimimmippipmmiim" +
+    "emimmipimeeeemimmeemimiippimeeeeemimimmmimmmeeeemimimiiipim" +
+    "miipmemimmeeeemimimiipipimmipppimeeemimmpppmmpmeeeeemimmemmBigbootePlanet 10Ei!cthulhu",
+    "BigbootePlanet 10Ei!cthulhu"], tag = "aiaiaip"):
         self.problemId = gameId
         self.seed = seed
         self.tag = tag
-        self.solution = game.makeCommands(seed, commands)
+        self.solution = game.makeCommands(seed, commands)#.replace("".join(game.strToCommands("Ei!")), "Ei!")
 
 def to_json(solutionsList):
     return SolutionEncoder().encode(solutionsList)
@@ -265,7 +307,7 @@ def to_json(solutionsList):
 def main(inputFileNames, timeLimit, memoryLimit, phrase):
     result = 0
     if not inputFileNames:
-        inputFileNames = ["test_data/problem_{0}.json".format(i) for i in range(24)]
+        inputFileNames = ["test_data/problem_{0}.json".format(i) for i in range(24) if i!=6 ]
         #print >> sys.stderr, "input file was not provided"
         #result = 1
     if not timeLimit:

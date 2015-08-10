@@ -161,8 +161,17 @@ class Game(object):
             self.commandsDict[command] = MoveType.RC
         for command in "kstuwxKSTUWX":
             self.commandsDict[command] = MoveType.RCC
-
-
+        self.lettersDict = {
+            MoveType.W :"p'!.03",
+            MoveType.E : "bcefy2",
+            MoveType.SW: "aghij4",
+            MoveType.SE: "lmno 5",
+            MoveType.RC: "dqrvz1",
+            MoveType.RCC: "kstuwx"
+        }
+    def convert(self, str, seed):
+        rnd = Random(seed+1)
+        return "".join([self.lettersDict[s][rnd.next() % len(self.lettersDict[s])] for s in str])
         ##following line is an example of cells emptyness check:
         #print self.startField.fillCells([Cell({"x":1, "y":1})]).checkCells([Cell({"x":1, "y":1})])
 
@@ -296,11 +305,13 @@ class Solution(object):
     "eemimimeeeemimimiiiipmeemimimiimiimimmimeeemimimmippipmmiim" +
     "emimmipimeeeemimmeemimiippimeeeeemimimmmimmmeeeemimimiiipim" +
     "miipmemimmeeeemimimiipipimmipppimeeemimmpppmmpmeeeeemimmemmBigbootePlanet 10Ei!cthulhu",
-    "BigbootePlanet 10Ei!cthulhu"], tag = "s1"):
+    "BigbootePlanet 10Ei!cthulhu"], tag = "t1"):
         self.problemId = gameId
         self.seed = seed
-        self.tag = tag
+        self.tag = tag + str(seed)
         self.solution = Solver(game).solve(seed)#.replace("".join(game.strToCommands("Ei!")), "Ei!")
+        #self.solution = game.convert(self.solution, seed)
+        #return
         for phrase in phrasesOfPower:
             phrase_encoded = "".join(game.strToCommands(phrase))
             self.solution = self.solution.replace(phrase_encoded, phrase)
@@ -347,7 +358,6 @@ if __name__ == "__main__":
     (options, args) = parser.parse_args()
     if options.phrases:
         phrasesOfPower = sorted(options.phrases, key=len, reverse = True)
-        print phrasesOfPower
         result = main(options.inputFileName, options.timeLimit, options.memoryLimit, phrasesOfPower)
     else:
         result = main(options.inputFileName, options.timeLimit, options.memoryLimit, [])

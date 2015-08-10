@@ -143,6 +143,7 @@ class VizFrame(QtGui.QWidget):
         def onSolveClick():
             solver = icfp_solver.Solver(self.game)
             solStr = solver.solve(self.game.sourceSeeds[0])
+            solStr = self.game.makeCommands(self.game.sourceSeeds[0], [solStr])
             self.solTextEdit.setText(solStr)
             return
         btnSolve.clicked.connect(onSolveClick)

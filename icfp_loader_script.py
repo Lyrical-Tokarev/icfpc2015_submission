@@ -212,7 +212,7 @@ class Game(object):
             if moveResult:
                 return (moveResult, newOffset, newRotation, cmd2)
         return (False, currentOffset, currentRotation, cmd)
-    def makeCommands(self, seed, default_commands):
+    def makeCommands(self, seed, default_commands, einificate = True):
         """
         main method - should return sequence of commands
         """
@@ -235,7 +235,7 @@ class Game(object):
                 cmd_index = (cmd_index + 1) % len(cmds)
                 (moveResult, newOffset, newRotation, cmd2) = self.substituteMove(currentField, currentUnit, currentOffset, currentRotation, cmd)
                 if moveResult:
-                    if cmd2 == MoveType.SW and last_cmd != MoveType.W:
+                    if einificate and cmd2 == MoveType.SW and last_cmd != MoveType.W:
                         #print "eification"
                         offset = currentOffset
                         rotation = currentRotation
@@ -307,7 +307,7 @@ class Solution(object):
     "eemimimeeeemimimiiiipmeemimimiimiimimmimeeemimimmippipmmiim" +
     "emimmipimeeeemimmeemimiippimeeeeemimimmmimmmeeeemimimiiipim" +
     "miipmemimmeeeemimimiipipimmipppimeeemimmpppmmpmeeeeemimmemmBigbootePlanet 10Ei!cthulhu",
-    "BigbootePlanet 10Ei!cthulhu"], tag = "t2"):
+    "BigbootePlanet 10Ei!cthulhu", "Planet 10Ei!cthulhu", "Ei!", "Ia! Ia! R'lyeh"], tag = "t3"):
         self.problemId = gameId
         self.seed = seed
         self.tag = tag #+ str(seed)
@@ -315,8 +315,15 @@ class Solution(object):
         #self.solution = game.convert(self.solution, seed)
         #return
         if gameId == 6:
-            self.solution = commands[0]
-        self.solution = game.makeCommands(seed, [self.solution])
+            best_commands = game.makeCommands(seed, [self.solution])
+            for i in range(len(commands)):
+                self.solution = commands[i]
+                self.solution = game.makeCommands(seed, [self.solution], False)
+                if len(self.solution) > len(best_commands):
+                    best_commands = self.solution
+            self.solution = best_commands
+        else:
+            self.solution = game.makeCommands(seed, [self.solution])
         for phrase in phrasesOfPower:
             phrase_encoded = ''.join(game.strToCommands(phrase))
             self.solution = self.solution.replace(phrase_encoded, phrase)
@@ -328,7 +335,7 @@ def to_json(solutionsList):
 def main(inputFileNames, timeLimit, memoryLimit, phrases):
     result = 0
     if not inputFileNames:
-        inputFileNames = ["test_data/problem_{0}.json".format(i) for i in range(25)  ]
+        inputFileNames = ["test_data/problem_{0}.json".format(i) for i in range(25)  if i!=6]
         #print >> sys.stderr, "input file was not provided"
         #result = 1
     if not timeLimit:

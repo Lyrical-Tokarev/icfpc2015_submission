@@ -40,7 +40,7 @@ class Solver(object):
     def solve(self, seed):
         self.gameField = self.game.startField
         self.rndGenerator = icfp_random.Random(seed)
-        from icfp_loader_script import Cell
+        from icfp_loader_script import Cell, MoveType
         self.unitIndex = self.rndGenerator.next() % len(self.game.units)
         self.currentUnit = self.game.units[self.unitIndex]
         self.currentUnitOffsets = self.game.unitStartOffsets[self.unitIndex]
@@ -50,6 +50,7 @@ class Solver(object):
             bestCost = 10000000
             bestOffset = self.currentUnitOffsets
             bestRotation = 0
+            #bestTailMoves = []
             estimator = BadnessEstimator(self.game.startField.width, self.game.startField.height)
             for rotation in [0, -1, 1]:
                 cells = self.currentUnit.moveAndRotate(bestOffset, rotation)
@@ -60,10 +61,25 @@ class Solver(object):
                     canMove = True
                     prevCells = []
                     while True:
+                        #(moveResult, newOffset, newRotation, cmd2) = self.game.substituteMove(
+                        #    self.gameField, self.currentUnit, offset, rotation, MoveType.SW)
+                        #if moveResult:
+                        #before:
                         offset = offset + Cell(0, 1)
-                        cells = self.currentUnit.moveAndRotate(offset, 0)
-                        if not self.gameField.checkCells(cells): break
+                        cells = self.currentUnit.moveAndRotate(offset, rotation)
+                        if not self.gameField.checkCells(cells):
+                            break
                         prevCells = cells
+                    newOffset = offset
+                    newRotation = rotation
+                    #tailMoves = []
+                    #while True:
+                    #    (moveResult, newOffset, newRotation, cmd2) = self.game.substituteMove(
+                    #        self.gameField, self.currentUnit, newOffset, newRotation, MoveType.SW)
+                    #    if not moveResult:
+                    #        break
+                    #    prevCells = self.currentUnit.moveAndRotate(newOffset, newRotation)
+                    #    tailMoves.append(cmd2)
                     f = self.gameField.fillCells(prevCells)
                     centerOfMass = computeCenterOfMass(prevCells)
                     cost = -centerOfMass[1] if len(prevCells) > 0 else -offset.y  #todo: put heuristics here estimator.scoreHeight(f) + estimator.scoreFilledRows(f)
@@ -71,10 +87,12 @@ class Solver(object):
                         bestCost = cost
                         bestOffset = offset
                         bestRotation = rotation
+                        #bestTailMoves = tailMoves
             cells = self.currentUnit.moveAndRotate(bestOffset + Cell(0, -1), bestRotation)
             #for cell in cells: print cell
             self.gameField = self.gameField.fillCells(cells)
             r.extend(getRoute(self.currentUnitOffsets, bestOffset, bestRotation))
+            #r.extend(bestTailMoves)
             lines = self.gameField.countLines()
             if lines > 0:
                 self.gameField = self.gameField.cleanLines()
